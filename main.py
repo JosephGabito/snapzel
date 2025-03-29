@@ -1,34 +1,31 @@
-import os
-import uuid
-from dotenv import load_dotenv
-from scraper.links_aggregator import Website_Scraper
-from intelligence.summary_analyzer import Summary_Analyzer
-from intelligence.html_generator import HTMLGenerator
 from fastapi import FastAPI
 from app.celery_worker import generate_brochure_task
+from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
-app = FastAPI()
+print(f"[FASTAPI] REDISCLOUD_URL = {os.getenv('REDISCLOUD_URL')}")
 
-@app.get("/")
-def read_root():
-    return {"Hey folks": "I'm here"}
+app = FastAPI()
 
 @app.post("/generate")
 def generate(data: dict):
     url = data.get("url")
-    task = generate_brochure_task.delay(url)  # .delay() queues it in the background
+    task = generate_brochure_task.delay(url)
     return {"task_id": task.id}
 
 @app.get("/status/{task_id}")
 def status(task_id: str):
-    result = generate_brochure_task.AsyncResult(task_id)
+    from app.celery_worker import celery
+    result = celery.AsyncResult(task_id)
     return {
         "state": result.state,
         "result": result.result
     }
 
+
+"""
 @app.get("/create-service")
 def service():
     url = "https://uncannyowl.com/"
@@ -52,3 +49,4 @@ def service():
 
     with open('temp/landing.html', "w", encoding="utf-8") as f:
         f.write(content)
+"""
