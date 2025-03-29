@@ -69,4 +69,7 @@ coverage.xml
 .DS_Store
 Thumbs.db
 
+# Fly.io backup configs (optional)
+fly.toml~
+
 /temp

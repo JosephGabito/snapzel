@@ -5,3 +5,5 @@ python-dotenv
 markdown
 weasyprint
 html-sanitizer
+fastapi[standard]
+uvicorn

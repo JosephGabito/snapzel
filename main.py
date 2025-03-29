@@ -6,11 +6,18 @@ from scraper.links_aggregator import Website_Scraper
 from intelligence.summary_analyzer import Summary_Analyzer
 from intelligence.html_generator import HTMLGenerator
 from html_sanitizer import Sanitizer
+from fastapi import FastAPI
 
 load_dotenv()
 
-def main():
-    url = "https://automatorplugin.com"
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"Hey folks":"I'm here"}
+
+def service():
+    url = "https://uncannyowl.com/"
     session_id = str(uuid.uuid4())
     session_dir = "temp"
     os.makedirs(session_dir, exist_ok=True)
@@ -34,6 +41,11 @@ def main():
     
     with open('temp/landing.html', "w", encoding="utf-8") as f:
         f.write(content)
+        
+def main():
+   
+    
+    pass
 
 if __name__ == "__main__":
     main()
