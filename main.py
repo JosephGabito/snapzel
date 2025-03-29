@@ -14,7 +14,7 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"Hey folks":"I'm here"}
+    return {"Hey folks": "I'm here"}
 
 def service():
     url = "https://uncannyowl.com/"
@@ -22,12 +22,10 @@ def service():
     session_dir = "temp"
     os.makedirs(session_dir, exist_ok=True)
 
-    # Generate brochure content via AI
     scraper = Website_Scraper(url)
     summary_analyzer = Summary_Analyzer(scraper)
     markdown_content = summary_analyzer.create_brochure()
 
-    # Save markdown file
     md_path = os.path.join(session_dir, f"brochure-{session_id}.md")
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(markdown_content)
@@ -35,17 +33,8 @@ def service():
     with open(md_path, "r", encoding="utf-8") as f:
         markdown_text = f.read()
 
-    # Convert to landing page
-    gen = HTMLGenerator( markdown_text )
+    gen = HTMLGenerator(markdown_text)
     content = gen.generate_landing_page_html()
-    
+
     with open('temp/landing.html', "w", encoding="utf-8") as f:
         f.write(content)
-        
-def main():
-   
-    
-    pass
-
-if __name__ == "__main__":
-    main()
