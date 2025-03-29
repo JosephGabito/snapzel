@@ -1,2 +1,1 @@
-# TODO: Modify this Procfile to fit your needs
-web: gunicorn app:app
+web: gunicorn main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
