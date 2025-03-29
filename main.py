@@ -1,5 +1,8 @@
 from scraper.links_aggregator import Website_Scraper
-from intelligence.links_relevancy_analyzer import Links_Relevancy_Analyzer
+from intelligence.links_relevancy_analyzer import LinksRelevancyAnalyzer
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def main():
     url = "https://automatorplugin.com";
@@ -7,8 +10,7 @@ def main():
     website = Website_Scraper( url )
     links   = website.get_links()
     
-    links_analyzer = Links_Relevancy_Analyzer( links, url )
-    print( links_analyzer.get_user_prompt() )
-    pass
+    links_analyzer = LinksRelevancyAnalyzer( links, url )
+    print( links_analyzer.analyze() )
 
 main()
