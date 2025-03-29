@@ -42,6 +42,7 @@ class LinksRelevancyAnalyzer:
             f"{self.get_links()}"
         )
         
+        
     def analyze(self):
         client = OpenAI()
         response = client.chat.completions.create(
@@ -54,3 +55,4 @@ class LinksRelevancyAnalyzer:
         )
         result = response.choices[0].message.content
         return json.loads(result)
+
