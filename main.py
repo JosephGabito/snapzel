@@ -1,7 +1,10 @@
-from fastapi import FastAPI
+import os
+import time
+import validators
+
+from fastapi import FastAPI,HTTPException
 from app.celery_worker import generate_brochure_task
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -9,12 +12,35 @@ print(f"[FASTAPI] REDISCLOUD_URL = {os.getenv('REDISCLOUD_URL')}")
 
 app = FastAPI()
 
+"""
+Requests to Root
+"""
+@app.get("/")
+@app.post("/")
+def root():
+    return {"_ts": time.time()}
+
+"""
+POST request to /generate endpoint.
+"""
 @app.post("/generate")
 def generate(data: dict):
+    
     url = data.get("url")
+    validate = validators.url( url )
+    
+    if url is None:
+        raise HTTPException(status_code=400, detail=f"Key 'url' is required in the dictionary")
+    if True != validate:
+        raise HTTPException(status_code=400, detail=f"{url} is not a valid url")
+
     task = generate_brochure_task.delay(url)
+    
     return {"task_id": task.id}
 
+"""
+GET request to /generate endpoint.
+"""
 @app.get("/status/{task_id}")
 def status(task_id: str):
     from app.celery_worker import celery
@@ -23,8 +49,6 @@ def status(task_id: str):
         "state": result.state,
         "result": result.result
     }
-
-
 """
 @app.get("/create-service")
 def service():
