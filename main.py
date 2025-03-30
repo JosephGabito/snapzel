@@ -1,46 +1,90 @@
 import os
 import time
+import json
 import validators
+import uuid
 
-from fastapi import FastAPI,HTTPException
-from app.celery_worker import generate_brochure_task
+from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from clerk_backend_api import Clerk
+from clerk_backend_api.jwks_helpers import authenticate_request, AuthenticateRequestOptions
 
+from app.celery_worker import generate_brochure_task
+
+# Load environment variables
 load_dotenv()
 
 print(f"[FASTAPI] REDISCLOUD_URL = {os.getenv('REDISCLOUD_URL')}")
 
+# Initialize FastAPI
 app = FastAPI()
 
-"""
-Requests to Root
-"""
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://snapzel-clerk.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# -----------------------------
+# Clerk Auth Dependency
+# -----------------------------
+def get_authenticated_user(request: Request):
+    try:
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+
+        sdk = Clerk(bearer_auth=os.getenv('CLERK_SECRET_KEY'))
+
+        request_state = sdk.authenticate_request(
+            request,
+            AuthenticateRequestOptions(
+                authorized_parties=["https://snapzel-clerk.vercel.app", "http://localhost:3000"]
+            ),
+        )
+
+        if not request_state.is_signed_in:
+            raise HTTPException(status_code=401, detail="User is not authenticated")
+
+        return request_state.payload
+
+    except Exception as error:
+        try:
+            error_dict = json.loads(str(error))
+            message = error_dict.get("errors", [{}])[0].get("long_message", str(error))
+        except json.JSONDecodeError:
+            message = str(error)
+        raise HTTPException(status_code=401, detail=message)
+
+
+# -----------------------------
+# Routes
+# -----------------------------
+
 @app.get("/")
 @app.post("/")
 def root():
     return {"_ts": time.time()}
 
-"""
-POST request to /generate endpoint.
-"""
 @app.post("/generate")
-def generate(data: dict):
-    
+def generate(data: dict, request: Request, user=Depends(get_authenticated_user)):
     url = data.get("url")
-    validate = validators.url( url )
-    
-    if url is None:
-        raise HTTPException(status_code=400, detail=f"Key 'url' is required in the dictionary")
-    if True != validate:
-        raise HTTPException(status_code=400, detail=f"{url} is not a valid url")
+
+    if not url:
+        raise HTTPException(status_code=400, detail="Key 'url' is required")
+    if not validators.url(url):
+        raise HTTPException(status_code=400, detail=f"{url} is not a valid URL")
 
     task = generate_brochure_task.delay(url)
-    
     return {"task_id": task.id}
 
-"""
-GET request to /generate endpoint.
-"""
 @app.get("/status/{task_id}")
 def status(task_id: str):
     from app.celery_worker import celery
@@ -49,6 +93,11 @@ def status(task_id: str):
         "state": result.state,
         "result": result.result
     }
+
+# -----------------------------
+# Archived Route (Keep for Reference)
+# -----------------------------
+
 """
 @app.get("/create-service")
 def service():
