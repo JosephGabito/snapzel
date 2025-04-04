@@ -90,6 +90,19 @@ def generate(data: dict, request: Request, user=Depends(get_authenticated_user))
         raise HTTPException(status_code=400, detail=f"{url} is not a valid URL")
 
     task = generate_brochure_task.delay(url)
+
+    from app.repository.database_instance import db
+    
+    document = {
+        "url": url,
+        "task_id": task.id,
+        "status": "pending",
+        "user_id_clerk": user.user_id,
+    }
+
+    jobs_collection = db.get_collection('jobs')
+    jobs_collection.insert_one( document )
+
     return {"task_id": task.id}
 
 @app.get("/status/{task_id}")
