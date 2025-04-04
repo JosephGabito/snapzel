@@ -70,3 +70,4 @@ Snapzel will soon support a lightweight FastAPI-based web UI, allowing you to:
 ## 📝 License
 MIT – feel free to fork, remix, and evolve it.
 
+celery --broker=redis://default:beIlJ3BlYJO3TRkbERa6mX8Ge71WOdPI@redis-16959.c74.us-east-1-4.ec2.redns.redis-cloud.com:16959

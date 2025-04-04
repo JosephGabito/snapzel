@@ -2,13 +2,12 @@ import os
 import time
 import json
 import validators
-import uuid
 
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from clerk_backend_api import Clerk
-from clerk_backend_api.jwks_helpers import authenticate_request, AuthenticateRequestOptions
+from clerk_backend_api.jwks_helpers import AuthenticateRequestOptions
 
 from app.celery_worker import generate_brochure_task
 
@@ -67,14 +66,22 @@ def get_authenticated_user(request: Request):
 # -----------------------------
 # Routes
 # -----------------------------
-
 @app.get("/")
 @app.post("/")
-def root():
-    return {"_ts": time.time()}
+def root(): 
+    """
+    Root url.
+    """
+    return {
+       "_ts": time.time(),
+    }
+   
 
 @app.post("/generate")
 def generate(data: dict, request: Request, user=Depends(get_authenticated_user)):
+    """
+    Generate brochures.
+    """
     url = data.get("url")
 
     if not url:
@@ -87,8 +94,10 @@ def generate(data: dict, request: Request, user=Depends(get_authenticated_user))
 
 @app.get("/status/{task_id}")
 def status(task_id: str):
+    
     from app.celery_worker import celery
     result = celery.AsyncResult(task_id)
+
     return {
         "state": result.state,
         "result": result.result
