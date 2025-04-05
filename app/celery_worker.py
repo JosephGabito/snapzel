@@ -45,20 +45,22 @@ else:
 
 @celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True)
 def generate_brochure_task(self, url: str):
-    print(f"🚀 Task ID: {self.request.id}")
+    print(f"🚀 Task ID -->: {self.request.id}")
     print(f"🚀 Generating brochure for {url}")
     
+    print( f"Request ID: {self.request.id}" );
+
     jobs_collection = db.get_collection('jobs')
-    jobs_collection.update_one({
+    jobs_collection.update_one(
         {"task_id": self.request.id},
         {"$set": {"status": "in-progress"}}
-    });
-    
-    time.sleep(45)  # Simulate processing
+    );
 
-    jobs_collection.update_one({
+    time.sleep(120)  # Simulate processing
+
+    jobs_collection.update_one(
         {"task_id": self.request.id},
         {"$set": {"status": "done"}}
-    });
+    );
     
     return f"✅ Brochure generated for {url}"
