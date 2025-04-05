@@ -97,7 +97,8 @@ def generate(data: dict, request: Request, user=Depends(get_authenticated_user))
         "url": url,
         "task_id": task.id,
         "status": "pending",
-        "user_id_clerk": user.user_id,
+        "user_id_clerk": user['user_id'],
+        "date_added": time.time()
     }
 
     jobs_collection = db.get_collection('jobs')
@@ -116,6 +117,26 @@ def status(task_id: str):
         "result": result.result
     }
 
+@app.get("/user/tasks")
+def find_user_tasks(user=Depends(get_authenticated_user)):
+    from app.repository.database_instance import db
+    from pymongo import DESCENDING
+
+    jobs_collection = db.get_collection("jobs")
+    jobs = jobs_collection.find({
+        "user_id_clerk": user['user_id'],
+        "date_added": {"$exists": True }
+    }).sort("date_added", DESCENDING )
+    
+    tasks = []
+    
+    for job in jobs:
+        job['_id'] = str( job['_id'] )
+        tasks.append( job )
+    
+    return {
+        "tasks": tasks
+    }
 # -----------------------------
 # Archived Route (Keep for Reference)
 # -----------------------------
