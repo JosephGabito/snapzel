@@ -140,29 +140,3 @@ def find_user_tasks(user=Depends(get_authenticated_user)):
 # -----------------------------
 # Archived Route (Keep for Reference)
 # -----------------------------
-
-"""
-@app.get("/create-service")
-def service():
-    url = "https://uncannyowl.com/"
-    session_id = str(uuid.uuid4())
-    session_dir = "temp"
-    os.makedirs(session_dir, exist_ok=True)
-
-    scraper = Website_Scraper(url)
-    summary_analyzer = Summary_Analyzer(scraper)
-    markdown_content = summary_analyzer.create_brochure()
-
-    md_path = os.path.join(session_dir, f"brochure-{session_id}.md")
-    with open(md_path, "w", encoding="utf-8") as f:
-        f.write(markdown_content)
-
-    with open(md_path, "r", encoding="utf-8") as f:
-        markdown_text = f.read()
-
-    gen = HTMLGenerator(markdown_text)
-    content = gen.generate_landing_page_html()
-
-    with open('temp/landing.html', "w", encoding="utf-8") as f:
-        f.write(content)
-"""
