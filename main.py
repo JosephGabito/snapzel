@@ -139,24 +139,26 @@ def find_user_tasks(user=Depends(get_authenticated_user)):
     }
 
 def serve_file(file_prefix: str, file_extension: str, file_type: str, task_id: str):
-    from fastapi.responses import FileResponse  # Local import (intentional + clean)
+    from fastapi.responses import FileResponse
 
-    # Define the file path
+    # Use Heroku's actual temp directory
+    temp_dir = "/tmp"
+
     filename = f"{file_prefix}-{task_id}.{file_extension}"
-    temp_dir = os.path.join(os.path.dirname(__file__), "temp")
     file_path = os.path.join(temp_dir, filename)
 
-    # Check existence
+    print(f"downloading file from {file_path}")
+
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail=f"File '{filename}' not found")
 
-    # Serve the file
     return FileResponse(
         path=file_path,
         filename=filename,
         media_type=file_type,
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
 
 
 # -------------------------

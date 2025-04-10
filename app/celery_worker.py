@@ -47,31 +47,28 @@ else:
         result_backend=None
     )
     
-def generate_brochure(url:str, user_id:str):
-    
-    session_dir = "temp"
-    os.makedirs(session_dir, exist_ok=True)
+def generate_brochure(url: str, user_id: str):
+
+    session_dir = "/tmp"  # Heroku-approved scratch space
 
     scraper = Website_Scraper(url)
     summary_analyzer = Summary_Analyzer(scraper)
     markdown_content = summary_analyzer.create_brochure()
 
-    # Create the Markdown.
     md_path = os.path.join(session_dir, f"brochure-{user_id}.md")
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(markdown_content)
 
-    # Reads the Markdown.
-    with open(md_path, "r", encoding="utf-8") as f:
-        markdown_text = f.read()
+    gen = HTMLGenerator(markdown_content)
+    html_content = gen.generate_landing_page_html()
 
-    # Tap into HTMLGenerator and pass the Markdown text.
-    gen = HTMLGenerator(markdown_text)
-    content = gen.generate_landing_page_html()
+    html_path = os.path.join(session_dir, f"landing-{user_id}.html")
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
 
-    # Finally convert it to HTML
-    with open(f"temp/landing-{user_id}.html", "w", encoding="utf-8") as f:
-        f.write(content)
+    print(f"[TMP WRITE] Markdown → {md_path}")
+    print(f"[TMP WRITE] HTML → {html_path}")
+
 
 
 @celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True)
