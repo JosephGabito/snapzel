@@ -137,6 +137,47 @@ def find_user_tasks(user=Depends(get_authenticated_user)):
     return {
         "tasks": tasks
     }
-# -----------------------------
-# Archived Route (Keep for Reference)
-# -----------------------------
+
+def serve_file(file_prefix: str, file_extension: str, file_type: str, task_id: str):
+    from fastapi.responses import FileResponse  # Local import (intentional + clean)
+
+    # Define the file path
+    filename = f"{file_prefix}-{task_id}.{file_extension}"
+    temp_dir = os.path.join(os.path.dirname(__file__), "temp")
+    file_path = os.path.join(temp_dir, filename)
+
+    # Check existence
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail=f"File '{filename}' not found")
+
+    # Serve the file
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type=file_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+# -------------------------
+# Endpoint: README (Markdown)
+# -------------------------
+@app.post("/download-readme")
+async def download_readme(data: dict, user=Depends(get_authenticated_user)):
+    task_id = data.get("task_id")
+    if not task_id:
+        raise HTTPException(status_code=400, detail="Missing task_id")
+
+    return serve_file("brochure", "md", "text/markdown", str(task_id))
+
+
+# -------------------------
+# Endpoint: Landing Page (HTML)
+# -------------------------
+@app.post("/download-landing-page")
+async def view_landing(data: dict, user=Depends(get_authenticated_user)):
+    task_id = data.get("task_id")
+    if not task_id:
+        raise HTTPException(status_code=400, detail="Missing task_id")
+
+    return serve_file("landing", "html", "text/html", str(task_id))
